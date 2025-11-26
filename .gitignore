@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# Reports
+report/*.pdf
