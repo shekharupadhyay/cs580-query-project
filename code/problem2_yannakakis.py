@@ -37,17 +37,14 @@ def hash_join_generic(
 def forward_semijoin(relations: List[List[Tuple2]]) -> List[List[Tuple2]]:
     
     k = len(relations)
-    # Make a copy to avoid mutating input directly
     R = [list(rel) for rel in relations]
 
     
     for i in range(k - 2, -1, -1):
         right = R[i + 1]
-        # Collect the set of valid join keys from right's first attribute
-        valid_keys = {t[0] for t in right}  # A_{i+1} from R_{i+1}
-        # Filter R_i
+        valid_keys = {t[0] for t in right}
         left = R[i]
-        R[i] = [t for t in left if t[1] in valid_keys]  # keep tuples whose A_{i+1} is in valid_keys
+        R[i] = [t for t in left if t[1] in valid_keys]
 
     return R
 
@@ -57,7 +54,6 @@ def backward_semijoin(relations: List[List[Tuple2]]) -> List[List[Tuple2]]:
     k = len(relations)
     R = [list(rel) for rel in relations]
 
-    # From R_2 up to R_k
     for i in range(1, k):
         left = R[i - 1]
         

@@ -23,7 +23,6 @@ def hash_join_generic(
         key = lt[left_key_index]
         if key in hash_right:
             for rt in hash_right[key]:
-                # Drop rt[right_key_index] to avoid duplicating the join column
                 merged = lt + rt[:right_key_index] + rt[right_key_index + 1 :]
                 result.append(merged)
 
@@ -39,7 +38,6 @@ def naive_line_join(relations: List[List[Tuple[int, int]]]) -> List[Tuple[int, .
 
     
     if len(relations) == 1:
-        # Each tuple is (A1, A2)
         return [tuple(t) for t in current]
 
     
@@ -76,7 +74,6 @@ def main():
         (50, 500),  
     ]
 
-    # R3(A3, A4)
     R3 = [
         (100, 1000),
         (200, 2000),
