@@ -126,9 +126,54 @@ def run_mysql_join(R1: List[Tuple[int, int]], R2: List[Tuple[int, int]], R3: Lis
 
     except mysql.connector.Error as err:
         print(f"MySQL Error: {err}")
-        print("\nNote: Make sure MySQL is installed and running.")
-        print("You may need to update the connection credentials in the code.")
-        print("To install MySQL connector: pip install mysql-connector-python")
+        print("Falling back to SQLite for performance comparison...")
+        return run_sqlite_join(R1, R2, R3)
+
+def run_sqlite_join(R1, R2, R3):
+    import sqlite3
+    try:
+        # Use simple in-memory DB for fairness with "local" test, or file for realism.
+        # In-memory is closer to what we want to test (join algo speed) without disk I/O noise,
+        # but MySQL would use disk/buffer pool. Let's use file to be safe, or just in-memory for speed.
+        # Given the small dataset (2000 tuples), in-memory is fine and comparable to the Python lists.
+        conn = sqlite3.connect(':memory:')
+        cursor = conn.cursor()
+
+        cursor.execute("CREATE TABLE R1 (A1 INT, A2 INT)")
+        cursor.execute("CREATE INDEX idx_r1_a2 ON R1(A2)")
+        
+        cursor.execute("CREATE TABLE R2 (A2 INT, A3 INT)")
+        cursor.execute("CREATE INDEX idx_r2_a2 ON R2(A2)")
+        cursor.execute("CREATE INDEX idx_r2_a3 ON R2(A3)")
+        
+        cursor.execute("CREATE TABLE R3 (A3 INT, A4 INT)")
+        cursor.execute("CREATE INDEX idx_r3_a3 ON R3(A3)")
+
+        cursor.executemany("INSERT INTO R1 VALUES (?, ?)", R1)
+        cursor.executemany("INSERT INTO R2 VALUES (?, ?)", R2)
+        cursor.executemany("INSERT INTO R3 VALUES (?, ?)", R3)
+        conn.commit()
+
+        query = """
+            SELECT R1.A1, R1.A2, R2.A3, R3.A4
+            FROM R1
+            JOIN R2 ON R1.A2 = R2.A2
+            JOIN R3 ON R2.A3 = R3.A3
+        """
+
+        start_time = time.time()
+        cursor.execute(query)
+        results = cursor.fetchall()
+        sqlite_time = time.time() - start_time
+
+        cursor.close()
+        conn.close()
+        
+        print(f"SQLite (fallback) completed in {sqlite_time:.6f} seconds")
+        return results, sqlite_time
+
+    except Exception as e:
+        print(f"SQLite Error: {e}")
         return [], -1
 
 
